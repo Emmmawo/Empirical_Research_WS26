@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 1 · Reproducible Research Workflow"
 subtitle: "Empirical Research in Accounting, Auditing and Capital Markets · WS 2026/27"
-author: "Your Name"
+author: "Yan Wu"
 date: "22 October 2026"
 output:
   html_document:
@@ -16,10 +16,11 @@ knitr::opts_chunk$set(echo = TRUE, comment = "", message = FALSE, warning = FALS
 
 # How to use this document
 
-This R Markdown belongs to the slides of **Tutorial 1**. Whenever a slide shows the blue **▶ IN RSTUDIO** bar, switch to this document and work on the part and chunk named there.
+This R Markdown belongs to the slides of **Tutorial 1**.
+Whenever a slide shows the blue **▶ IN RSTUDIO** bar, switch to this document and work on the part and chunk named there.
 
 | Part | Topic | Slides block |
-|------|-------|--------------|
+|------------------|------------------|------------------------------------|
 | 1 | RStudio Projects and R Markdown | III |
 | 2 | Git and GitHub setup | IV |
 | 3 | R as a calculator, objects, data types | V |
@@ -28,23 +29,28 @@ This R Markdown belongs to the slides of **Tutorial 1**. Whenever a slide shows 
 | 6 | Coding with AI: bug hunt | VI |
 | 7 | Wrap-up | VII |
 
-> **In this tutorial you conduct empirical accounting research yourself** — from raw data to your own code to your own evidence. Today we build the toolbox: an R project, R Markdown, Git/GitHub and careful AI-assisted coding.
+> **In this tutorial you conduct empirical accounting research yourself** — from raw data to your own code to your own evidence.
+> Today we build the toolbox: an R project, R Markdown, Git/GitHub and careful AI-assisted coding.
 
-Run a chunk with the green ▶ button (or `Ctrl+Shift+Enter`), a single line with `Ctrl+Enter`. Knit the whole document with `Ctrl+Shift+K`.
+Run a chunk with the green ▶ button (or `Ctrl+Shift+Enter`), a single line with `Ctrl+Enter`.
+Knit the whole document with `Ctrl+Shift+K`.
 
 ------------------------------------------------------------------------
 
 # Part 1 · RStudio Projects and R Markdown
 
-An **RStudio Project** is a folder with an `.Rproj` file. Opening the `.Rproj` file sets the working directory to that folder. All paths in our code are **relative** to the project root, so the code runs on every laptop.
+An **RStudio Project** is a folder with an `.Rproj` file.
+Opening the `.Rproj` file sets the working directory to that folder.
+All paths in our code are **relative** to the project root, so the code runs on every laptop.
 
-When you knit, R runs the document in the folder of the `.Rmd` file (`session_01/`). The **here** package always finds the project root (the folder containing the `.Rproj` file) — regardless of where the document lives.
+When you knit, R runs the document in the folder of the `.Rmd` file (`session_01/`).
+The **here** package always finds the project root (the folder containing the `.Rproj` file) — regardless of where the document lives.
 
 ### Chunk 1.1 · Where am I?
 
 ```{r chunk_1_1}
 ## Where does R look for files right now?
-
+getwd()
 
 ```
 
@@ -52,14 +58,18 @@ When you knit, R runs the document in the folder of the `.Rmd` file (`session_01
 
 ```{r chunk_1_2}
 ## Install once (Console!): install.packages("here")
+library(here)
 ## The project root
+here()
 ## Build a path to the data folder — works on Windows, Mac and Linux
+here("data","compustat.csv")
 ## Does the file exist? (TRUE once you have copied the Moodle files into data/)
-
+file.exists(here("data","compustat.csv"))
 
 ```
 
-Compare this with an **absolute path** such as `"C:/Users/seitz/Documents/01_Lehre/compustat.csv"` — it only works on my laptop. Note also: R wants forward slashes `/` (or doubled backslashes `\\`) in paths.
+Compare this with an **absolute path** such as `"C:/Users/seitz/Documents/01_Lehre/compustat.csv"` — it only works on my laptop.
+Note also: R wants forward slashes `/` (or doubled backslashes `\\`) in paths.
 
 ### Exercise 1.3 · Make the document yours
 
@@ -73,7 +83,9 @@ Compare this with an **absolute path** such as `"C:/Users/seitz/Documents/01_Leh
 
 # Part 2 · Git and GitHub
 
-Git records snapshots (**commits**) of your project folder. GitHub stores these snapshots in the cloud. The daily loop is **pull → work → commit → push**.
+Git records snapshots (**commits**) of your project folder.
+GitHub stores these snapshots in the cloud.
+The daily loop is **pull → work → commit → push**.
 
 The chunks in this part are set to `eval = FALSE`: you run them **once**, line by line, in the **Console** — not every time you knit.
 
@@ -87,7 +99,9 @@ install.packages(c("usethis", "gitcreds"))
 usethis::git_sitrep()
 ```
 
-If Git is missing: **Windows** — install from <https://git-scm.com> (defaults are fine). **Mac** — run `xcode-select --install` in the Terminal. Then check *Tools → Global Options → Git/SVN* and restart RStudio.
+If Git is missing: **Windows** — install from <https://git-scm.com> (defaults are fine).
+**Mac** — run `xcode-select --install` in the Terminal.
+Then check *Tools → Global Options → Git/SVN* and restart RStudio.
 
 ### Chunk 2.2 · Tell Git who you are
 
@@ -136,7 +150,8 @@ In **RStudio**:
 4.  **Push** (green arrow).
 5.  Open your fork on github.com: is the commit there?
 
-*Question:* Why does the knitted `.html` file not appear in the Git tab? → Look into `.gitignore`.
+*Question:* Why does the knitted `.html` file not appear in the Git tab?
+→ Look into `.gitignore`.
 
 ------------------------------------------------------------------------
 
@@ -144,17 +159,21 @@ In **RStudio**:
 
 ## R as a calculator
 
-Basic operations: `+ - * / ^`. Some functions:
+Basic operations: `+ - * / ^`.
+Some functions:
 
-| Description          | R code     |
-|----------------------|------------|
-| Absolute value       | `abs(x)`   |
-| Square root          | `sqrt(x)`  |
-| Exponential function | `exp(x)`   |
-| Natural logarithm    | `log(x)`   |
+| Description          | R code        |
+|----------------------|---------------|
+| Absolute value       | `abs(x)`      |
+| Square root          | `sqrt(x)`     |
+| Exponential function | `exp(x)`      |
+| Natural logarithm    | `log(x)`      |
 | Round to s digits    | `round(x, s)` |
 
-The assignment operator is the arrow `<-` (shortcut `Alt + -`). `=` also works but is not recommended. `#` starts a comment. R is **case-sensitive**.
+The assignment operator is the arrow `<-` (shortcut `Alt + -`).
+`=` also works but is not recommended.
+`#` starts a comment.
+R is **case-sensitive**.
 
 ### Chunk 3.1 · Calculator and assignment
 
@@ -168,7 +187,10 @@ The assignment operator is the arrow `<-` (shortcut `Alt + -`). `=` also works b
 
 ## Objects and data types
 
-R works with objects: numbers, text, vectors, matrices, data frames, functions, results … The main data types are **numeric**, **character** (text), **logical** (TRUE/FALSE) and **integer**. `class()` tells you the type, `as.numeric()`, `as.character()` etc. convert. The decimal separator is a **point**. `rm()` deletes an object.
+R works with objects: numbers, text, vectors, matrices, data frames, functions, results … The main data types are **numeric**, **character** (text), **logical** (TRUE/FALSE) and **integer**.
+`class()` tells you the type, `as.numeric()`, `as.character()` etc. convert.
+The decimal separator is a **point**.
+`rm()` deletes an object.
 
 ### Chunk 3.2 · Data types
 
@@ -202,44 +224,48 @@ R works with objects: numbers, text, vectors, matrices, data frames, functions, 
 
 **Welcome to our running example: you!**
 
-Before we work with real accounting data, we practise with data we all know: the universities and cities where you study. Because you know these data, you will notice immediately when your code produces something wrong.
+Before we work with real accounting data, we practise with data we all know: the universities and cities where you study.
+Because you know these data, you will notice immediately when your code produces something wrong.
 
-| Students | University | City |
-|---------:|-------------------------------|------------|
-| 8 | LMU Munich | Munich |
-| 1 | Aalto University | Espoo |
-| 1 | Stockholm School of Economics | Stockholm |
-| 1 | University of Mannheim | Mannheim |
-| 1 | University of Eastern Finland | Joensuu |
-| +1 | exchange / second city | Vienna |
-| +1 | exchange / second city | Shanghai |
+| Students | University                    | City      |
+|---------:|-------------------------------|-----------|
+|        8 | LMU Munich                    | Munich    |
+|        1 | Aalto University              | Espoo     |
+|        1 | Stockholm School of Economics | Stockholm |
+|        1 | University of Mannheim        | Mannheim  |
+|        1 | University of Eastern Finland | Joensuu   |
+|       +1 | exchange / second city        | Vienna    |
+|       +1 | exchange / second city        | Shanghai  |
 
 And this is what we know about the cities:
 
 | City | Country | Inhabitants (approx.) | At the sea? | Party drink | Alcohol-free |
-|-----------|---------|-----------:|-----|------------------|--------------|
-| Munich    | Germany | 1,510,000  | no  | Helles beer      | Spezi        |
-| Espoo     | Finland | 320,000    | yes | Lonkero          | Jaffa        |
-| Stockholm | Sweden  | 990,000    | yes | Akvavit          | Julmust      |
-| Mannheim  | Germany | 315,000    | no  | Riesling Schorle | Apfelschorle |
-| Joensuu   | Finland | 78,000     | no  | Koskenkorva      | Kotikalja    |
-| Vienna    | Austria | 2,000,000  | no  | Spritzer         | Almdudler    |
-| Shanghai  | China   | 24,900,000 | yes | Huangjiu         | Suanmeitang  |
+|------------|------------|-----------:|------------|-------------|------------|
+| Munich | Germany | 1,510,000 | no | Helles beer | Spezi |
+| Espoo | Finland | 320,000 | yes | Lonkero | Jaffa |
+| Stockholm | Sweden | 990,000 | yes | Akvavit | Julmust |
+| Mannheim | Germany | 315,000 | no | Riesling Schorle | Apfelschorle |
+| Joensuu | Finland | 78,000 | no | Koskenkorva | Kotikalja |
+| Vienna | Austria | 2,000,000 | no | Spritzer | Almdudler |
+| Shanghai | China | 24,900,000 | yes | Huangjiu | Suanmeitang |
 
-*Note:* The population numbers below were drafted with the help of AI and rounded. Are they right? That is Task A2.
+*Note:* The population numbers below were drafted with the help of AI and rounded.
+Are they right?
+That is Task A2.
 
 ## Vectors
 
-The simplest way to collect many values is a **vector**: `c(value1, value2, ...)`. A vector has **exactly one data type**.
+The simplest way to collect many values is a **vector**: `c(value1, value2, ...)`.
+A vector has **exactly one data type**.
 
-| Description                      | R code             |
-|----------------------------------|--------------------|
-| Number of elements               | `length(x)`        |
-| Largest / smallest value         | `max(x)`, `min(x)` |
-| Sort                             | `sort(x)`          |
-| Sum / product / mean             | `sum(x)`, `prod(x)`, `mean(x)` |
-| n copies of z                    | `rep(z, n)`        |
-| Sequence from f to t (step s)    | `seq(f, t, s)` or `f:t` |
+| Description                   | R code                         |
+|-------------------------------|--------------------------------|
+| Number of elements            | `length(x)`                    |
+| Largest / smallest value      | `max(x)`, `min(x)`             |
+| Sort                          | `sort(x)`                      |
+| Sum / product / mean          | `sum(x)`, `prod(x)`, `mean(x)` |
+| n copies of z                 | `rep(z, n)`                    |
+| Sequence from f to t (step s) | `seq(f, t, s)` or `f:t`        |
 
 ### Chunk 4.1 · Create vectors
 
@@ -259,19 +285,22 @@ The simplest way to collect many values is a **vector**: `c(value1, value2, ...)
 
 ```
 
-**Task A1:** Which of "your" cities have more than 1 million inhabitants? How many are they?
+**Task A1:** Which of "your" cities have more than 1 million inhabitants?
+How many are they?
 
 ```{r task_A1}
 
 
 ```
 
-**Task A2 (verification):** Look up the population of *one* city in an official source (e.g., the statistical office of the country). Is our rounded number close enough? What exactly is counted — city proper or metropolitan area?
-
+**Task A2 (verification):** Look up the population of *one* city in an official source (e.g., the statistical office of the country).
+Is our rounded number close enough?
+What exactly is counted — city proper or metropolitan area?
 
 ## Factors
 
-A **factor** maps labels to an underlying integer code. Factors are useful for categories such as countries, industries or audit firms.
+A **factor** maps labels to an underlying integer code.
+Factors are useful for categories such as countries, industries or audit firms.
 
 ### Chunk 4.3 · Factors
 
@@ -282,7 +311,8 @@ A **factor** maps labels to an underlying integer code. Factors are useful for c
 
 ## Matrices — and the matrix trap
 
-`cbind()` combines vectors column-wise, `rbind()` row-wise. Like a vector, a **matrix has exactly one data type**.
+`cbind()` combines vectors column-wise, `rbind()` row-wise.
+Like a vector, a **matrix has exactly one data type**.
 
 ### Chunk 4.4 · Matrices
 
@@ -294,7 +324,9 @@ A **factor** maps labels to an underlying integer code. Factors are useful for c
 
 ```
 
-**Task B:** Run `sum(m2[, "inhabitants"])`. What happens and why? How could you have noticed **before** the error?
+**Task B:** Run `sum(m2[, "inhabitants"])`.
+What happens and why?
+How could you have noticed **before** the error?
 
 ```{r task_B, error=TRUE}
 
@@ -314,7 +346,9 @@ A **list** is a bag that can hold any objects of any length and type.
 
 ## Data frames
 
-A **data frame** is the most important object for data analysis: a rectangle with **columns = variables** and **rows = observations**. Each column has one type, but different columns can have different types. **Tidy data:** every column a variable, every row an observation, every cell a single value.
+A **data frame** is the most important object for data analysis: a rectangle with **columns = variables** and **rows = observations**.
+Each column has one type, but different columns can have different types.
+**Tidy data:** every column a variable, every row an observation, every cell a single value.
 
 Useful functions: `data.frame()`, `head()`, `str()`, `nrow()`, `ncol()`, `summary()`, `subset()`, `df$column`.
 
@@ -345,7 +379,9 @@ students <- data.frame(
 
 ```
 
-**Task C · Party planning:** Every student brings the drink of their (home) city. How many bottles of each drink do we need? Check your result against what you know about the class.
+**Task C · Party planning:** Every student brings the drink of their (home) city.
+How many bottles of each drink do we need?
+Check your result against what you know about the class.
 
 ```{r task_C}
 ## Look up each student's drink in df_cities (a first "merge" — more in Tutorial 2)
@@ -359,7 +395,10 @@ students <- data.frame(
 
 # Part 5 · Packages and importing Compustat
 
-**Packages** are collections of functions. Install once per laptop with `install.packages("name")` (or *Tools → Install Packages*), load in every session with `library(name)`. Load all packages at the top of a document. If two packages have functions with the same name, write `package::function()`.
+**Packages** are collections of functions.
+Install once per laptop with `install.packages("name")` (or *Tools → Install Packages*), load in every session with `library(name)`.
+Load all packages at the top of a document.
+If two packages have functions with the same name, write `package::function()`.
 
 The **tidyverse** is a collection of packages for data analysis: `readr` (import), `dplyr` (manipulation), `ggplot2` (graphics), `tidyr`, `tibble` …
 
@@ -371,10 +410,11 @@ The **tidyverse** is a collection of packages for data analysis: `readr` (import
 
 ```
 
-Our data: **Compustat North America**, all public U.S. and Canadian firms, fiscal years 2010–2014 — downloaded from WRDS. Licensed data: it stays in `data/`, it is not pushed to GitHub, and it is not pasted into public AI tools.
+Our data: **Compustat North America**, all public U.S. and Canadian firms, fiscal years 2010–2014 — downloaded from WRDS.
+Licensed data: it stays in `data/`, it is not pushed to GitHub, and it is not pasted into public AI tools.
 
 | File | Separator | Decimal | Function |
-|------|-----------|---------|----------|
+|-----------------|---------------------|-----------------|-------------------|
 | `compustat.csv` | `,` | `.` | `read_csv()` (readr) or `read.csv()` (base R) |
 | `compustat_German_format.csv` | `;` | `,` | `read_csv2()` or `read.csv2()` |
 
@@ -396,8 +436,8 @@ Our data: **Compustat North America**, all public U.S. and Canadian firms, fisca
 
 ```
 
-**Your conclusion:** what differs between the three imports — and which one would you trust? Why?
-
+**Your conclusion:** what differs between the three imports — and which one would you trust?
+Why?
 
 ### Chunk 5.4 · Five checks after every import
 
@@ -411,7 +451,9 @@ Our data: **Compustat North America**, all public U.S. and Canadian firms, fisca
 
 ```
 
-**Task D:** Run the five checks above. What surprises you? Note two or three observations as text below the chunk.
+**Task D:** Run the five checks above.
+What surprises you?
+Note two or three observations as text below the chunk.
 
 ```{r task_D}
 ## Your extra checks
@@ -419,9 +461,9 @@ Our data: **Compustat North America**, all public U.S. and Canadian firms, fisca
 
 ```
 
-
-*Teaser for Tutorial 2:* compare `nrow(cs)` with `n_distinct(cs$gvkey, cs$fyear)`. What do you see — and why? (Hint: `indfmt`.)
-
+*Teaser for Tutorial 2:* compare `nrow(cs)` with `n_distinct(cs$gvkey, cs$fyear)`.
+What do you see — and why?
+(Hint: `indfmt`.)
 
 ### Chunk 5.5 · Export and clean up
 
@@ -438,11 +480,17 @@ Our data: **Compustat North America**, all public U.S. and Canadian firms, fisca
 
 # Part 6 · Coding with AI: bug hunt
 
-The script below was "written by an AI" for the prompt *"Summarise our student cities and the Compustat data."* It looks plausible. Some lines run without any error — and are still wrong.
+The script below was "written by an AI" for the prompt *"Summarise our student cities and the Compustat data."* It looks plausible.
+Some lines run without any error — and are still wrong.
 
-**Round 1 (10 min, by hand):** Run the chunk. Mark every bug with a comment `# BUG:` and a reason. Use what you know about our cities.
+**Round 1 (10 min, by hand):** Run the chunk.
+Mark every bug with a comment `# BUG:` and a reason.
+Use what you know about our cities.
 **Round 2 (10 min, with AI):** Give the script of chunk 6.1 to an AI tool of your choice (for example the Posit Assistant in RStudio or a chat assistant in the browser) — the code only, **never the Compustat data**: *"Review this R code for bugs. For each bug, explain why it is a bug and how to fix it."* Compare with your list.
-**Round 3 (5 min):** Which bugs did the AI find that you missed? Which did it miss? Did it invent a bug? What does that mean for how you use AI?
+**Round 3 (5 min):** Which bugs did the AI find that you missed?
+Which did it miss?
+Did it invent a bug?
+What does that mean for how you use AI?
 
 ### Chunk 6.1 · The AI-generated script
 
@@ -477,8 +525,8 @@ summarise_median(cs, at, by = fyear)
 
 ### Chunk 6.2 · Solution: bugs, fixes and checks
 
-Write your corrected version below. After every fix, check the result against something you know (e.g., Munich has 8 students).
-
+Write your corrected version below.
+After every fix, check the result against something you know (e.g., Munich has 8 students).
 
 ```{r chunk_6_2}
 ## (a) match by name, not by position — and check with known values
@@ -491,20 +539,19 @@ Write your corrected version below. After every fix, check the result against so
 
 ```
 
-
 ------------------------------------------------------------------------
 
 # Part 7 · Wrap-up
 
 **Checklist — can you do this now?**
 
--   [ ] Open the course project via the `.Rproj` file and knit this document
--   [ ] Use relative paths with `here()`
--   [ ] `usethis::git_sitrep()` shows no problems
--   [ ] Fork, clone, commit and push work
--   [ ] Create vectors, factors, matrices, lists, data frames — and check their types
--   [ ] Import a CSV and run the five checks
--   [ ] Use AI to draft and review code — and check what you use
+- [ ] Open the course project via the `.Rproj` file and knit this document
+- [ ] Use relative paths with `here()`
+- [ ] `usethis::git_sitrep()` shows no problems
+- [ ] Fork, clone, commit and push work
+- [ ] Create vectors, factors, matrices, lists, data frames — and check their types
+- [ ] Import a CSV and run the five checks
+- [ ] Use AI to draft and review code — and check what you use
 
 **Before Tutorial 2 (Thu 29 Oct):** commit and push your completed version of this document.
 
