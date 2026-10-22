@@ -107,8 +107,8 @@ Then check *Tools → Global Options → Git/SVN* and restart RStudio.
 
 ```{r chunk_2_2, eval=FALSE}
 ## Use the e-mail address of your GitHub account
-usethis::use_git_config(user.name  = "Jane Doe",
-                        user.email = "jane.doe@campus.lmu.de")
+usethis::use_git_config(user.name  = "Emmmawo",
+                        user.email = "yanw2017@gmail.com")
 ```
 
 ### Chunk 2.3 · Give RStudio a key to GitHub (personal access token)
@@ -179,10 +179,26 @@ R is **case-sensitive**.
 
 ```{r chunk_3_1}
 ## Assign values to objects (no output)
+
+x <- 10
+
+X <- 12
+
+x^2
+y <- 3
+
+(z <- y^x)
 ## Fun with floating point: Euler's identity e^(i*pi) + 1 = 0
+
+i <- complex(real=0,imaginary=1)
+exp(pi*i)+1
+
+round(exp(pi*i)+1, 10)
 ## Lesson: never test numbers with == after calculations, use all.equal()
 
+0.1+0.2==0.3
 
+isTRUE(all.equal(0.1+0.2, 0.3))
 ```
 
 ## Objects and data types
@@ -195,7 +211,18 @@ The decimal separator is a **point**.
 ### Chunk 3.2 · Data types
 
 ```{r chunk_3_2}
+number <- 42
+text <- "ultimate question of life, the universe, and everything"
+logic <- TRUE
+interger <- 42L
+
+class(number)
+class(text)
 ## Conversion
+as.numeric(integer)
+as.integer(42.56)
+as.numeric("42.56")
+
 ## Delete an object
 
 
@@ -214,7 +241,15 @@ The decimal separator is a **point**.
 | And                      | `a & b`  |
 
 ```{r chunk_3_3}
+munich <- 1510000
+espoo <- 320000
 
+munich > espoo
+munich == espoo
+munich != espoo
+
+(munich > 1e6) & (espoo > 1e6)
+(munich > 1e6) | (espoo >1e6)
 
 ```
 
@@ -270,9 +305,28 @@ A vector has **exactly one data type**.
 ### Chunk 4.1 · Create vectors
 
 ```{r chunk_4_1}
+cities <- c("Munich", "Espoo", "stockholm","Mannheim","Joensuu","Vienna","Shanghei")
+inhabitants <- c(1510000, 320000, 990000, 315000, 78000,2000000,24900000)
+
+
 ## Give the elements names
+names(inhabitants) <- cities
+inhabitants
+
 ## Vector functions
+length(cities)
+sum(inhabitants)/le6   #in millions
+
+mean(inhabitants)
+median(inhabitants)
+
+sort(inhabitants)
+
 ## Special vectors
+
+
+rep("beer",3)
+seq(2010,2014)
 ## Calculations work element by element
 
 
@@ -281,7 +335,13 @@ A vector has **exactly one data type**.
 ### Chunk 4.2 · Indexing
 
 ```{r chunk_4_2}
-
+inhabitants[2] #by position
+inhabitants[2:4]
+inhabitants["Vienna"]
+inhabitants[c("Munich","Shanghei")]
+inhabitants[-1]
+inhabitants[inhabitants < 500000]
+inhabitants[inhabitants > 1000000]
 
 ```
 
@@ -289,7 +349,8 @@ A vector has **exactly one data type**.
 How many are they?
 
 ```{r task_A1}
-
+inhabitants[inhabitants > 1000000]
+length(inhabitants[inhabitants >1000000])
 
 ```
 
@@ -305,7 +366,7 @@ Factors are useful for categories such as countries, industries or audit firms.
 ### Chunk 4.3 · Factors
 
 ```{r chunk_4_3}
-
+country <- factor(c("Germany","Finland","Sweden","Germany","Finland","Austria","China"))
 
 ```
 
@@ -317,7 +378,17 @@ Like a vector, a **matrix has exactly one data type**.
 ### Chunk 4.4 · Matrices
 
 ```{r chunk_4_4}
+students_n <-c(8,1,1,1,1,1,1)
+
+m <- cbind(inhabitants, students=students_n)
+m
+
+class(m[,"inhabitants"])
+
 ## Add a text column: is the city at the sea?
+m2 <- cbind(m,sea=c("NO","YES","YES","NO","NO","NO","YES"))
+m2
+
 ## Add a row
 ## Indexing: first row, then column
 
@@ -340,7 +411,19 @@ A **list** is a bag that can hold any objects of any length and type.
 ### Chunk 4.5 · Lists
 
 ```{r chunk_4_5}
+Party <- list(
+  title = "Empirical Research course party",
+  cities = cities,
+  drinks = c(Munich = "Helles beer",
+             Espoo = "Lonkero",
+             Stockholm = "Akvavit",
+             Mannheim = "Riesling Schorle",
+             Joensuu = "Koskenkorva",
+             Vienna = "Spritzer",
+             Shanghei = "Huangjiu")
+)
 
+names(Party)
 
 ```
 
