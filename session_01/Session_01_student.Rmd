@@ -23,7 +23,7 @@ This R Markdown belongs to the slides of **Tutorial 1**.
 Whenever a slide shows the blue **▶ IN RSTUDIO** bar, switch to this document and work on the part and chunk named there.
 
 | Part | Topic | Slides block |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | 1 | RStudio Projects and R Markdown | III |
 | 2 | Git and GitHub setup | IV |
 | 3 | R as a calculator, objects, data types | V |
@@ -278,7 +278,7 @@ Because you know these data, you will notice immediately when your code produces
 And this is what we know about the cities:
 
 | City | Country | Inhabitants (approx.) | At the sea? | Party drink | Alcohol-free |
-|----|----|---:|----|----|----|
+|------------|------------|-----------:|------------|------------|------------|
 | Munich | Germany | 1,510,000 | no | Helles beer | Spezi |
 | Espoo | Finland | 320,000 | yes | Lonkero | Jaffa |
 | Stockholm | Sweden | 990,000 | yes | Akvavit | Julmust |
@@ -308,7 +308,7 @@ A vector has **exactly one data type**.
 ### Chunk 4.1 · Create vectors
 
 ```{r chunk_4_1}
-cities <- c("Munich", "Espoo", "stockholm","Mannheim","Joensuu","Vienna","Shanghei")
+cities <- c("Munich", "Espoo", "stockholm","Mannheim","Joensuu","Vienna","Shanghai")
 inhabitants <- c(1510000, 320000, 990000, 315000, 78000,2000000,24900000)
 
 
@@ -318,7 +318,7 @@ inhabitants
 
 ## Vector functions
 length(cities)
-sum(inhabitants)/le6   #in millions
+sum(inhabitants)/1e6   #in millions
 
 mean(inhabitants)
 median(inhabitants)
@@ -341,7 +341,7 @@ seq(2010,2014)
 inhabitants[2] #by position
 inhabitants[2:4]
 inhabitants["Vienna"]
-inhabitants[c("Munich","Shanghei")]
+inhabitants[c("Munich","Shanghai")]
 inhabitants[-1]
 inhabitants[inhabitants < 500000]
 inhabitants[inhabitants > 1000000]
@@ -370,7 +370,7 @@ Factors are useful for categories such as countries, industries or audit firms.
 
 ```{r chunk_4_3}
 country <- factor(c("Germany","Finland","Sweden","Germany","Finland","Austria","China"))
-
+country
 ```
 
 ## Matrices — and the matrix trap
@@ -393,8 +393,12 @@ m2 <- cbind(m,sea=c("NO","YES","YES","NO","NO","NO","YES"))
 m2
 
 ## Add a row
+r <- rbind(m2, Beijing=c("4500000",1,"NO"))
+r
 ## Indexing: first row, then column
-
+r[1,]
+r[,1]
+r[1]
 
 ```
 
@@ -404,7 +408,7 @@ How could you have noticed **before** the error?
 
 ```{r task_B, error=TRUE}
 
-
+sum(m2[,"inhabitants"])
 ```
 
 ## Lists
@@ -423,10 +427,11 @@ Party <- list(
              Mannheim = "Riesling Schorle",
              Joensuu = "Koskenkorva",
              Vienna = "Spritzer",
-             Shanghei = "Huangjiu")
+             Shanghai = "Huangjiu")
 )
 
 names(Party)
+Party
 
 ```
 
@@ -452,9 +457,11 @@ df_cities <- data.frame(
 )
 df_cities
 str(inhabitants)
-ncol("drink")
-head("drink")
-
+ncol(df_cities)
+head(df_cities,3)
+sum(df_cities$inhabitants < 1e6)
+subset(df_cities, inhabitants < 1e6)
+subset(df_cities, sea)
 ```
 
 The student data are given — run this chunk:
@@ -484,9 +491,13 @@ Check your result against what you know about the class.
 
 ```{r task_C}
 ## Look up each student's drink in df_cities (a first "merge" — more in Tutorial 2)
+#table(students$student_id,students$city,df_cities$drink[match(students$city,df_cities$city)])
+
 students$drink <- df_cities$drink[match(students$city,df_cities$city)]
 students[,c("student_id","city","drink")]
 
+#nrow(students[students$city == "Munich",])
+sum(students$city == "Munich")
 ## Check with what we know: 8 LMU students -> should be 8 x Helles beer
 ## Alternative with the same answer (independent implementation)
 
@@ -517,7 +528,7 @@ Our data: **Compustat North America**, all public U.S. and Canadian firms, fisca
 Licensed data: it stays in `data/`, it is not pushed to GitHub, and it is not pasted into public AI tools.
 
 | File | Separator | Decimal | Function |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | `compustat.csv` | `,` | `.` | `read_csv()` (readr) or `read.csv()` (base R) |
 | `compustat_German_format.csv` | `;` | `,` | `read_csv2()` or `read.csv2()` |
 
@@ -529,7 +540,7 @@ cs_b <- read.csv(here("data", "compustat.csv"))
 cs_g <- read_csv2(here("data","compustat_German_format.csv"))
 
 dim(cs)
-
+dim(cs_b)
 ```
 
 ### Chunk 5.3 · Same file, same data? Compare!
@@ -588,7 +599,7 @@ Note two or three observations as text below the chunk.
 
 ```{r task_D}
 ## Your extra checks
-
+cs |> filter(tic=="AAPL", fyear == 2013) |> select(conm, fyear,at, sale, ni)
 
 ```
 
@@ -635,7 +646,7 @@ What does that mean for how you use AI?
 ## (a) Number of students per city, added to the city table
 n_per_city <- table(students$city)
 city_info <- df_cities
-city_info$n_students <- c(as.numeric(n_per_city), 0, 0) #match wrong city
+city_info$n_students <- c(as.numeric(n_per_city), 0, 0) #这里应该错误在于，将students$city的值直接赋值给了City_info。而没有进行city匹配。
 city_info[, c("city", "n_students")]
 
 ## (b) Population in millions
@@ -643,7 +654,7 @@ city_info$inhabitants_m <- city_info$inhabitants / 1e5 #bug le6
 city_info[, c("city", "inhabitants_m")]
 
 ## (c) German cities only
-german <- subset(city_info, country = "Germany") #bug use ==
+german <- subset(city_info, country = "Germany") #bug: use ==
 nrow(german)
 
 ## (d) Average sales of Compustat firms
@@ -653,6 +664,9 @@ cat("Average sales in thousand USD:", round(avg_sales), "\n") #bug average sales
 ## (e) Number of firms in the sample
 n_firms <- nrow(cs)
 cat("Number of firms:", n_firms, "\n") #firms is not use nrow(cs)
+
+#n_firms <- n_distinct(cs$gvkey)
+#cat("Number of unique firms:", n_firms, "\n")
 
 ## (f) Median total assets by fiscal year
 summarise_median(cs, at, by = fyear)  #function is not found
@@ -671,13 +685,23 @@ city_info$n_students <- as.numeric(n_per_city[city_info$city])
 city_info$n_students[is.na(city_info$n_students)] <- 0
 city_info[,c("city","n_students")]
 ## (b) millions — check: Munich must be about 1.5
+city_info$inhabitants_m <- city_info$inhabitants / 1e6 #bug le6
+city_info[, c("city", "inhabitants_m")]
+
 ## (c) comparison with == ; check: we know there are exactly two German cities
+
+german <- subset(city_info, country == "Germany") 
+nrow(german)
+
 ## (d) units and currency: Compustat items are in millions of the reporting currency
 cs |>
   group_by(curcd) |>
   summarise(median_at = median(at, na.rm = TRUE))
 
 ## (e) firms vs. firm-years
+n_distinct(cs$gvkey)
+n_distinct(cs$gvkey, cs$fyear)
+
 ## (f) an existing function — and an independent implementation as check
 
 
@@ -689,13 +713,13 @@ cs |>
 
 **Checklist — can you do this now?**
 
-- [ ] Open the course project via the `.Rproj` file and knit this document
-- [ ] Use relative paths with `here()`
-- [ ] `usethis::git_sitrep()` shows no problems
-- [ ] Fork, clone, commit and push work
-- [ ] Create vectors, factors, matrices, lists, data frames — and check their types
-- [ ] Import a CSV and run the five checks
-- [ ] Use AI to draft and review code — and check what you use
+- [x] Open the course project via the `.Rproj` file and knit this document
+- [x] Use relative paths with `here()`
+- [x] `usethis::git_sitrep()` shows no problems
+- [x] Fork, clone, commit and push work
+- [x] Create vectors, factors, matrices, lists, data frames — and check their types
+- [x] Import a CSV and run the five checks
+- [x] Use AI to draft and review code — and check what you use
 
 **Before Tutorial 2 (Thu 29 Oct):** commit and push your completed version of this document.
 
