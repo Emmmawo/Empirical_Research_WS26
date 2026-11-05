@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 2 · Data Preparation and Verification"
 subtitle: "Empirical Research in Accounting, Auditing and Capital Markets · WS 2026/27"
-author: "Your Name"
+author: "Yan Wu"
 date: "29 October 2026"
 output:
   html_document:
@@ -62,7 +62,7 @@ Every merge needs a **key**: one or more variables that identify an observation 
 In accounting research, the most important keys are:
 
 | Identifier | Identifies | Source | Watch out |
-|-------------------|-------------------|-----------------|-----------------|
+|-------------------|-------------------|------------------|------------------|
 | `gvkey` | a firm | Compustat | 6-digit **text** with leading zeros |
 | `permno` | a security (share class) | CRSP | a firm can have several permnos |
 | `cusip` | a security | US/Canada | changes after name changes |
@@ -136,7 +136,7 @@ meta <- request(base_url) |>
   req_url_path_append("projects", "main-esrs-kpi","releases", "v2.4", "meta") |>
   req_perform() |>
   resp_body_json(simplifyVector = TRUE)
- 
+
 names(meta)
 meta$version
 meta$row_count
@@ -144,17 +144,17 @@ meta$row_count
 srn_companies <- as_tibble(meta$companies)
 srn_field <-as_tibble(meta$fields)
 ## Save a raw copy: raw data is never edited
-write_csv(srn_companies |> mutate(stock_index = map_chr(stock_index, ~paste(.x, collaps =":"))),
-          here("data", "srn_companies_v2.4.csv")
+write_csv(srn_companies |> mutate(stock_index = map_chr(stock_index, ~paste(.x, collapse =":"))),
+          here("data", "srn_companies_v2.4.csv"))
           
 write_csv(srn_field, here("data","srn_field_v2.4.csv"))
 
-srn_companies <- read_csv(here("data","srn_companies_v2.4.csv"), trim_ws =FALSE)
-srn_field <- read_csv(here("data","srn_field_v2.4.csv"))
+
 ```
 
 ```{r chunk_2_1b}
-
+srn_companies <- read_csv(here("data","srn_companies_v2.4.csv"), trim_ws =FALSE)
+srn_field <- read_csv(here("data","srn_field_v2.4.csv"))
 
 ```
 
@@ -179,8 +179,17 @@ nchar(Sys.getenv("SRN_TOKEN")) > 0
 ### Chunk 2.3 · Download the data values (pinned to release v2.4)
 
 ```{r api_2_3}
+
+resp <- request(base_url) |>
+  req_url_path_append("projects","main-esrs-kpi","releases","v2.4.csv") |>
+  req_auth_bearer_token(Sys.getenv("SRN_TOKEN")) |>
+  req_perform()
+
+resp_status(resp)
+
 ## Save the raw download unchanged
 
+writeBin(resp_body_raw(resp),here("data","srn_main_esrs_kpi_v2.4.csv"))
 
 ```
 
@@ -191,8 +200,17 @@ Pinning the version makes your analysis reproducible.
 ### Chunk 2.4 · Read and inspect the raw data
 
 ```{r chunk_2_4}
+srn <- read_csv(here("data","srn_main_esrs_kpi_v2.4.csv"))
+#rm(srn)
 ## One row per ... ?
+
+srn |> distinct(isin, .keep_all=TRUE)
+
 ## The value column: numbers as text — and a special code
+srn_clean <- srn |> 
+  mutate(
+    value
+  )
 
 
 ```
