@@ -18,23 +18,23 @@ knitr::opts_chunk$set(echo = TRUE, comment = "", message = FALSE, warning = FALS
 
 This R Markdown belongs to the slides of **Tutorial 2**. Today we spend most of the time in RStudio. Whenever a slide shows the blue **▶ IN RSTUDIO** bar, switch to this document.
 
-| Part | Topic |
-|------|-------|
-| 0 | Setup: packages and data |
-| 1 | Identifiers: what makes a good key? |
-| 2 | Getting data from an API: the SRN database |
-| 3 | Missing values and duplicates |
-| 4 | Merges: rebuilding a Ball & Brown (1968) sample |
-| 5 | Auditing extracted data: SRN vs. Compustat |
-| 6 | Bug hunt: an AI-written merge script |
-| 7 | Wrap-up |
+| Part | Topic                                           |
+|------|-------------------------------------------------|
+| 0    | Setup: packages and data                        |
+| 1    | Identifiers: what makes a good key?             |
+| 2    | Getting data from an API: the SRN database      |
+| 3    | Missing values and duplicates                   |
+| 4    | Merges: rebuilding a Ball & Brown (1968) sample |
+| 5    | Auditing extracted data: SRN vs. Compustat      |
+| 6    | Bug hunt: an AI-written merge script            |
+| 7    | Wrap-up                                         |
 
 **Before you start:** pull the newest version of the course repository (Sync fork → Pull) and copy the new data files from Moodle into `data/`:
 
--   `compustat.csv` (from Tutorial 1)
--   `crsp_ccm_link.csv` — CRSP/Compustat Merged link table (WRDS)
--   `crsp_msf_2009_2015.csv` — CRSP monthly stock file (WRDS)
--   `compustat_global_2023_2025.csv` — Compustat Global fundamentals, fiscal years 2023–2025 (WRDS)
+- `compustat.csv` (from Tutorial 1)
+- `linking_table.csv` — CRSP/Compustat Merged link table (WRDS)
+- `monthly_stock_file.csv` — CRSP monthly stock file (WRDS)
+- `funda_annual.csv` — Compustat Global fundamentals, fiscal years 2023–2025 (WRDS)
 
 The SRN data you download yourself in Part 2.
 
@@ -58,7 +58,7 @@ library(httr2)
 Every merge needs a **key**: one or more variables that identify an observation uniquely. In accounting research, the most important keys are:
 
 | Identifier | Identifies | Source | Watch out |
-|------------|------------|--------|-----------|
+|-------------------|-------------------|-----------------|------------------|
 | `gvkey` | a firm | Compustat | 6-digit **text** with leading zeros |
 | `permno` | a security (share class) | CRSP | a firm can have several permnos |
 | `cusip` | a security | US/Canada | changes after name changes |
@@ -73,7 +73,14 @@ A key for **firm-year data** is usually a combination, e.g. `gvkey` + `fyear`.
 ```{r chunk_1_1}
 ## Join by name: how many matches?
 
+reports <- tibble(company = c("BMW", "Siemens Energy", "SAP"),
+                  year = 2024,
+                  scope1 = c(1.1, 0.3, 0.02))
+database <- tibble(company = c("Bayerische Motoren Werke AG", "Siemens Energy AG", "SAP SE"),
+                   year = 2024,
+                   revenue = c(142380, 34465, 34176))
 
+left_join(reports, database, by = c("company","year"))
 ```
 
 *Illustrative numbers.* Not a single match — although all three firms are in both tables. That is why we use codes such as `isin` or `gvkey`, and why name matching ("fuzzy matching") is a last resort that must be checked by hand.
@@ -83,9 +90,17 @@ A key for **firm-year data** is usually a combination, e.g. `gvkey` + `fyear`.
 An ISIN has 12 characters: a 2-letter country code, 9 alphanumeric characters and a check digit, e.g. `DE0005190003` (BMW).
 
 ```{r chunk_1_2}
+
+isins <- c("DE0005190003", "de0005190003", "DE000519000", " DE0005190003", NA)
+nchar(isins)
+
+str_detect(isins, "^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
+
+str_sub(isins, 1, 2)
+
 ## Repair what can be repaired: trim spaces, upper case
-
-
+isins_clean <- str_to_upper(str_trim(isins))
+isins_clean
 ```
 
 **Lesson:** before you merge, check that keys look the way they should. A lower-case letter or an invisible space is enough to break a merge — without any error message.
@@ -106,10 +121,33 @@ Advantages over clicking "download": the download becomes part of your code, so 
 ### Chunk 2.1 · An open endpoint: release metadata (no token needed)
 
 ```{r api_2_1}
-## Save a raw copy: raw data is never edited
 
+base_url <- "https://api.srnav.com"
+
+meta <- request(base_url) |> 
+  req_url_path_append("projects", "main-esrs-kpi", "releases", "v2.4", "meta") |> 
+  req_perform() |> 
+  resp_body_json(simplifyVector = TRUE)
+
+names(meta)
+meta$version
+meta$row_count
+
+srn_companies <- as_tibble(meta$companies)
+srn_fields <- as_tibble(meta$fields)
+
+## Save a raw copy: raw data is never edited
+write_csv(srn_companies |>  mutate(stock_index = map_chr(stock_index, ~paste(.x, collapse = ";"))),
+          here("data", "srn_companies_v2.4.csv"))
+
+write_csv(srn_fields, here("data", "srn_fields_v2.4.csv"))
+
+srn_companies <- read_csv(here("data", "srn_companies_v2.4.csv"), trim_ws = FALSE) # keep spaces as they are
+srn_fields <- read_csv(here("data","srn_fields_v2.4.csv"))
 
 ```
+
+\
 
 ```{r chunk_2_1b}
 
@@ -126,7 +164,7 @@ The data values need a personal token. Create one at **srnav.com → MySRN → A
 ## Run ONCE in the Console. A file opens: add the line
 ##   SRN_TOKEN=srn_your_token_here
 ## save it, then restart R (Session -> Restart R).
-usethis::edit_r_environ()
+#usethis::edit_r_environ()
 
 ## Check (shows TRUE, not the token itself)
 nchar(Sys.getenv("SRN_TOKEN")) > 0
@@ -135,7 +173,17 @@ nchar(Sys.getenv("SRN_TOKEN")) > 0
 ### Chunk 2.3 · Download the data values (pinned to release v2.4)
 
 ```{r api_2_3}
+
+resp <- request(base_url) |> 
+  req_url_path_append("projects", "main-esrs-kpi","releases","v2.4.csv") |> 
+  req_auth_bearer_token(Sys.getenv("SRN_TOKEN")) |> 
+  req_perform()
+
+resp_status(resp)
+
 ## Save the raw download unchanged
+
+writeBin(resp_body_raw(resp), here("data", "srn_main_esrs_kpi_v2.4.csv"))
 
 
 ```
@@ -145,9 +193,24 @@ nchar(Sys.getenv("SRN_TOKEN")) > 0
 ### Chunk 2.4 · Read and inspect the raw data
 
 ```{r chunk_2_4}
-## One row per ... ?
-## The value column: numbers as text — and a special code
 
+srn_raw <- read_csv(here("data", "srn_main_esrs_kpi_v2.4.csv"),
+                    col_types = cols(.default =col_character()))
+
+dim(srn_raw)
+
+names(srn_raw)
+
+head(srn_raw)
+
+## One row per ... ?
+srn_raw |>  count(field_slug) |> print(n=30)
+
+n_distinct(srn_raw$company_id)
+table(srn_raw$year, useNA = "ifany")
+
+## The value column: numbers as text — and a special code
+srn_raw |>  filter(is.na(suppressWarnings(as.numeric(value)))) |>  count(value, sort = TRUE)
 
 ```
 
@@ -161,9 +224,9 @@ The data are in **long format**: one row per company × year × indicator. For a
 
 A missing value (`NA`) can mean very different things:
 
--   the firm **did not report** the indicator (e.g. no Scope 3 emissions),
--   the indicator **does not apply** (e.g. no land use for a software firm),
--   the value **was not extracted** (yet) — a data problem, not a firm decision.
+- the firm **did not report** the indicator (e.g. no Scope 3 emissions),
+- the indicator **does not apply** (e.g. no land use for a software firm),
+- the value **was not extracted** (yet) — a data problem, not a firm decision.
 
 These are different economic stories. Treating all of them as "zero" or simply dropping them can bias your results.
 
@@ -249,7 +312,7 @@ Result: **261 firms**. Today we build a modern version for 2010–2014 and count
 ## Joins in dplyr
 
 | Function | Keeps |
-|----------|-------|
+|------------------------------------------|------------------------------|
 | `left_join(x, y)` | all rows of `x`; `NA` where `y` has no match |
 | `inner_join(x, y)` | only rows with a match in both |
 | `anti_join(x, y)` | rows of `x` **without** a match in `y` — your best diagnostic tool |
@@ -329,7 +392,6 @@ Most of these duplicates are **exact copies** of the same row; in the others onl
 
 ```
 
-
 ### Chunk 4.5 · Bonus: the Ball & Brown idea in five lines
 
 Do firms with **earnings increases** have higher stock returns over the fiscal year than firms with earnings decreases?
@@ -378,7 +440,6 @@ Here we use an independent source: **revenues** in Compustat Global. Both should
 
 **Task C:** Pick one firm with a large disagreement. Typical reasons: units (thousands vs. millions), currency, a different revenue definition, the wrong year — or an extraction error. Which is it? Who is right: SRN or Compustat?
 
-
 ------------------------------------------------------------------------
 
 # Part 6 · Bug hunt: an AI-written merge script
@@ -393,9 +454,9 @@ stopifnot(all(x > 1))            # stops with an error message
 
 Three assertions you can use in almost every merge:
 
--   the key is unique: `stopifnot(!any(duplicated(data[c("gvkey", "fyear")])))`
--   no rows were added by a join: `stopifnot(nrow(after) == nrow(before))`
--   identifiers look right: `stopifnot(all(nchar(data$gvkey) == 6))`
+- the key is unique: `stopifnot(!any(duplicated(data[c("gvkey", "fyear")])))`
+- no rows were added by a join: `stopifnot(nrow(after) == nrow(before))`
+- identifiers look right: `stopifnot(all(nchar(data$gvkey) == 6))`
 
 The script below was written by an AI for the prompt *"Merge Compustat with CRSP returns and the SRN revenues. Count the firms in the final sample."* It runs — mostly. **Find the bugs** (10 min by hand, then 10 min with an AI tool of your choice — code only, never the data).
 
@@ -449,12 +510,12 @@ Write your corrected version below. Add an assertion after every fix.
 
 **Checklist — can you do this now?**
 
--   [ ] Name the key of a data set and check that it is unique
--   [ ] Download data from an API with a token that never appears in your code
--   [ ] Explain why a value is missing before deciding what to do with it
--   [ ] Merge with `left_join`, `inner_join` and `anti_join` — and compare row counts before and after
--   [ ] Build a sample funnel and say which firms got lost
--   [ ] Check generated data against an independent source
+- [ ] Name the key of a data set and check that it is unique
+- [ ] Download data from an API with a token that never appears in your code
+- [ ] Explain why a value is missing before deciding what to do with it
+- [ ] Merge with `left_join`, `inner_join` and `anti_join` — and compare row counts before and after
+- [ ] Build a sample funnel and say which firms got lost
+- [ ] Check generated data against an independent source
 
 **Before Tutorial 3 (Thu 5 Nov):** commit and push your completed version of this document.
 
